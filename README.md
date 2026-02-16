@@ -1,4 +1,5 @@
 # Arch Setup
+Specifically for CachyOS, Arch Linux(though you need to install paru first), and other arch linux based distros eg: EndeavourOS
 
 # 1. ~/.config/fish/config.fish
 Fish Config file ~/.config/fish/config.fish looks like this
