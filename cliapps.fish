@@ -5,7 +5,7 @@ sudo pacman -Syu --noconfirm; or exit 1
 
 # Install CLI Apps from official repos
 sudo pacman -S --needed --noconfirm \
-    figlet fish curl git vulkan-tools os-prober tk \
+    vulkan-tools os-prober tk \
     neovim fzf ranger btop thefuck trash-cli fastfetch atuin \
     python-pipx mesa-utils gnupg wl-clipboard cava; or exit 1
 
