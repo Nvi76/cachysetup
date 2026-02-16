@@ -14,7 +14,7 @@ sudo cp /etc/hosts "$HOME/archsetup/hosts.backup"
 
 # Install base packages and AUR helper (paru is common on CachyOS)
 sudo pacman -Syu --noconfirm
-sudo pacman -S --needed --noconfirm base-devel fish curl figlet git clamav apparmor apparmor-utils
+sudo pacman -S --needed --noconfirm base-devel fish curl figlet git clamav apparmor apparmor-utils dkms linux-headers
 
 # Editing kernel parameters
 sudo pacman -S --noconfirm apparmor apparmor.d; or exit 1
