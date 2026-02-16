@@ -4,7 +4,7 @@
 sudo -v
 
 # Chmod +x all files
-chmod +x updater.fish cliapps.fish apps.fish autocpufreq.fish
+chmod +x updater.fish cliapps.fish apps.fish additionalutils.fish
 
 # Backup directory
 mkdir -p "$HOME/archsetup"
