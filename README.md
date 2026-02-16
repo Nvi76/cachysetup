@@ -1,7 +1,7 @@
 # archsetup
 
 # 1. Make sure the config file in ~/.config/fish/config.fish is like this
-
+```
 if status is-interactive
     # Prevent Atuin from setting its own (broken) bindings
     set -gx ATUIN_NOBIND true
@@ -22,6 +22,7 @@ if status is-interactive
 
 end
 
+# Aliases
 alias lsa "ls -a"
 alias update "~/.updater.fish"
 alias copy "wl-copy <"
@@ -35,20 +36,24 @@ alias listt "trash-list"
 thefuck --alias | source
 
 /home/linuxbrew/.linuxbrew/bin/brew shellenv | source
-
+```
 # 2. after installing homebrew make sure to manually copy the command that homebrew will gave you if it detects homebrew is not on path just to make sure
-
+```
+# Ensure the config directory exists
 if not test -d ~/.config/fish
     mkdir -p ~/.config/fish
 end
 
+# Append the Homebrew setup to Fish config
 echo 'eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv fish)' >> ~/.config/fish/config.fish
-eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv fish)
 
-3. make sure the /etc/nix/nix.conf file have this inside of it
+# Evaluate the Homebrew environment in the current session
+eval (/home/linuxbrew/.linuxbrew/bin/brew shellenv fish)
+```
+# 3. make sure the /etc/nix/nix.conf file have this inside of it
     experimental-features = nix-command flakes
     
-4. after secure.fish make sure to edit the kernel parameters at /etc/default/grub and append to. after that then update grub and enable the service (sudo grub-mkconfig -o /boot/grub/grub.cfg && sudo systemctl enable --now apparmor.service)
+# 4. after secure.fish make sure to edit the kernel parameters at /etc/default/grub and append to. after that then update grub and enable the service (sudo grub-mkconfig -o /boot/grub/grub.cfg && sudo systemctl enable --now apparmor.service)
+```
 GRUB_CMDLINE_LINUX_DEFAULT: apparmor=1 security=apparmor lsm=landlock,lockdown,yama,integrity,apparmor,bpf   
-
-        
+```
