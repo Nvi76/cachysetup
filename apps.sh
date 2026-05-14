@@ -298,6 +298,39 @@ while true; do
     esac
 done
 
+# Oterm
+clear
+echo "Do you want to install Oterm? (y/n):"
+while true; do
+    read -t 5 -p "Answer [y/n]: " reply
+    if [ -z "$reply" ]; then
+        reply="Y"
+    fi
+    case $reply in
+        Y|y)
+            echo "Installing Oterm..."
+            paru -S --needed --noconfirm oterm
+
+            mkdir -p "$(oterm --data-dir 2>/dev/null || echo ~/.local/share/oterm)" && \
+            config="$(oterm --data-dir 2>/dev/null || echo ~/.local/share/oterm)/config.json" && \
+            if [ -f "$config" ]; then
+            tmp=$(mktemp) && jq '. + {"splash-screen": false}' "$config" > "$tmp" && mv "$tmp" "$config"
+            else
+            echo '{"splash-screen": false}' > "$config"
+            fi
+
+            break
+            ;;
+        N|n)
+            echo "Skipping Oterm installation."
+            break
+            ;;
+        *)
+            echo "Please enter 'y' or 'n'."
+            ;;
+    esac
+done
+
 # OpenCode
 clear
 echo "Do you want to install OpenCode? (y/n):"
