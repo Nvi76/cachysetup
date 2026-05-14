@@ -4,7 +4,7 @@
 paru -Syu --noconfirm || exit 1
 
 # Install Apps
-sudo pacman -S --noconfirm --needed gimp discover -bin kdenlive localsend vulkan-tools os-prober mesa-utils \
+sudo pacman -S --noconfirm --needed gimp discover kdenlive localsend vulkan-tools os-prober mesa-utils \
 ffmpeg distrobox podman fzf ranger btop thefuck trash-cli fastfetch gnupg cava fish neovim figlet tmux atuin \
 python-pipx tk wl-clipboard
 
@@ -270,7 +270,7 @@ done
 # AI Tools
 clear
 echo "=========================================="
-echo "           AI Tools"
+echo "                AI Tools"
 echo "=========================================="
 timeout 2s sleep 2
 
@@ -641,9 +641,6 @@ grep -q "clipboard.*unnamedplus" ~/.config/nvim/lua/config/options.lua 2>/dev/nu
 # Run Nvim
 nvim
 
-# Run & Config zsh
-zsh
-
 echo "======================="
 echo "     70% Complete      "
 echo "======================="
@@ -672,40 +669,39 @@ configure_shells() {
 
     read -p $'\e[32mEnter choice [1-5]: \e[0m' shell_choice
 
-    case $shell_choice in
-        '1')
-            clear
-            echo "================================================="
-            echo "               Configuring Bash"
-            echo "================================================="
+    configure_bash() {
+        clear
+        echo "================================================="
+        echo "               Configuring Bash"
+        echo "================================================="
 
-            # Install Atuin
-            sudo pacman -S --needed --noconfirm atuin
+        # Install Atuin
+        sudo pacman -S --needed --noconfirm atuin
 
-            # ble.sh
-            clear
-            echo "Do you want to install ble.sh? (y/n):"
-            while true; do
-                read -t 5 -rp "Answer [y/n]: " reply
-                reply=${reply:-Y}
-                case $reply in
-                    [Yy])
-                        echo "How would you like to install ble.sh?"
-                        echo "1) Git"
-                        echo "2) Nix"
-                        read -p $'\e[32mEnter choice [1-2]: \e[0m' ble_choice
-                        case $ble_choice in
-                            '1')
-                                git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
-                                make -C /tmp/ble.sh install PREFIX="$HOME/.local"
+        # ble.sh
+        clear
+        echo "Do you want to install ble.sh? (y/n):"
+        while true; do
+            read -t 5 -rp "Answer [y/n]: " reply
+            reply=${reply:-Y}
+            case $reply in
+                [Yy])
+                    echo "How would you like to install ble.sh?"
+                    echo "1) Git"
+                    echo "2) Nix"
+                    read -p $'\e[32mEnter choice [1-2]: \e[0m' ble_choice
+                    case $ble_choice in
+                        '1')
+                            git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
+                            make -C /tmp/ble.sh install PREFIX="$HOME/.local"
                                 grep -q "blesh/ble.sh" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'EOF'
 
 # ble.sh
 [ -f "$HOME/.local/share/blesh/ble.sh" ] && source "$HOME/.local/share/blesh/ble.sh"
 EOF
-                                ;;
-                            '2')
-                                nix profile install nixpkgs#ble-sh
+                            ;;
+                        '2')
+                            nix profile install nixpkgs#ble-sh
                                 grep -q "blesh/ble.sh" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'EOF'
 
 # ble.sh
@@ -718,22 +714,22 @@ bleopt highlight_syntax=off
 bleopt highlight_filename=off
 bleopt complete_auto_delay=100
 EOF
-                                ;;
-                            *)
-                                echo "Invalid choice. Skipping ble.sh."
-                                ;;
-                        esac
-                        break
-                        ;;
-                    [Nn])
-                        echo "Skipping ble.sh installation."
-                        break
-                        ;;
-                    *)
-                        echo "Please answer y or n."
-                        ;;
-                esac
-            done
+                            ;;
+                        *)
+                            echo "Invalid choice. Skipping ble.sh."
+                            ;;
+                    esac
+                    break
+                    ;;
+                [Nn])
+                    echo "Skipping ble.sh installation."
+                    break
+                    ;;
+                *)
+                    echo "Please answer y or n."
+                    ;;
+            esac
+        done
 
 grep -q "=== apps.sh managed block" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'BASHEOF'
 # === apps.sh managed block - do not edit manually ===
@@ -751,6 +747,17 @@ alias listt="trash-list"
 alias copy="wl-copy <"
 alias paste="wl-paste >"
 alias rkscan="sudo rkhunter --check --sk"
+alias kate="flatpak run org.kde.kate"
+
+# Extra functions
+function gitpush_installscript() {
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+}
+
+# Add your other functions here
 
 # Homebrew
 if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
@@ -770,363 +777,162 @@ fi
 
 # === end of apps.sh block ===
 BASHEOF
-            echo "Bash configured at ~/.bashrc"
-            timeout 1s sleep 1
+        echo "Bash configured at ~/.bashrc"
+        timeout 1s sleep 1
+    }
+
+    configure_zsh() {
+        clear
+        echo "================================================="
+        echo "               Configuring Zsh"
+        echo "================================================="
+
+        # Install & Configure zsh
+        sudo pacman -S --needed --noconfirm zsh
+
+        # Install Atuin
+        sudo pacman -S --needed --noconfirm atuin
+
+            grep -q "=== apps.sh managed block" "$HOME/.zshrc" 2>/dev/null || cat >> "$HOME/.zshrc" << 'ZSHEOF'
+# === apps.sh managed block - do not edit manually ===
+eval "$(atuin init zsh)"
+
+# Aliases
+alias lsa="ls -a"
+alias update="~/.updater.sh"
+alias scan="clamscan -r"
+alias trm="trash-put"
+alias trestore="trash-restore"
+alias tbin="trash-empty"
+alias listt="trash-list"
+alias copy="wl-copy <"
+alias paste="wl-paste >"
+alias rkscan="sudo rkhunter --check --sk"
+alias kate="flatpak run org.kde.kate"
+
+# Extra functions
+function gitpush_installscript() {
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+}
+
+# Add your other functions here
+
+# Homebrew
+if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# Thefuck
+if command -v thefuck &>/dev/null; then
+    eval "$(thefuck --alias)"
+fi
+
+# Opencode
+export PATH="$PATH:$HOME/.opencode/bin"
+if command -v opencode &>/dev/null; then
+    source <(opencode completion zsh 2>/dev/null) 2>/dev/null || true
+fi
+
+# === end of apps.sh block ===
+ZSHEOF
+        echo "Zsh configured at ~/.zshrc"
+        timeout 1s sleep 1
+    }
+
+    configure_fish() {
+        clear
+        echo "================================================="
+        echo "                Configuring Fish"
+        echo "================================================="
+
+        # Install fish if not present
+        if command -v fish &>/dev/null; then
+            sudo pacman -S --needed --noconfirm fish
+        fi
+
+        # Install Atuin
+        sudo pacman -S --needed --noconfirm atuin
+
+        # Configure fish
+        FISH_CONFIG_DIR="$HOME/.config/fish"
+        FISH_CONFIG_FILE="$FISH_CONFIG_DIR/config.fish"
+        mkdir -p "$FISH_CONFIG_DIR"
+
+            cat > "$FISH_CONFIG_FILE" << 'FISHEOF'
+if status is-interactive
+    set -gx ATUIN_NOBIND true
+    atuin init fish | source
+
+    bind \e\[A _atuin_bind_up
+    bind \cr _atuin_search
+
+    if bind -M insert >/dev/null 2>&1
+        bind -M insert \e\[A _atuin_bind_up
+        bind -M insert \cr _atuin_search
+    end
+
+    bind \e\[3\;5~ kill-word
+    bind \cH backward-kill-word
+end
+
+# Aliases
+alias lsa "ls -a "
+alias update "~/.updater.sh "
+alias scan "clamscan -r "
+alias trm "trash-put "
+alias trestore "trash-restore "
+alias tbin "trash-empty "
+alias listt "trash-list "
+alias copy "wl-copy < "
+alias paste "wl-paste > "
+alias rkscan "sudo rkhunter --check --sk "
+alias kate "flatpak run org.kde.kate "
+
+# Extra functions
+function gitpush_installscript
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+end
+
+# Add your other functions here
+
+# Homebrew
+if test -f /home/linuxbrew/.linuxbrew/bin/brew
+    /home/linuxbrew/.linuxbrew/bin/brew shellenv | source
+end
+
+# Thefuck
+if command -v thefuck >/dev/null
+    thefuck --alias | source
+end
+
+FISHEOF
+        echo "Fish configured at $FISH_CONFIG_FILE"
+        timeout 1s sleep 1
+    }
+
+    case $shell_choice in
+        '1')
+            configure_bash
             ;;
 
         '2')
-            clear
-            echo "================================================="
-            echo "               Configuring Zsh"
-            echo "================================================="
-
-            # Install zsh
-            sudo pacman -S --needed --noconfirm zsh
-
-            # Install Oh My Zsh
-            if [ ! -d "$HOME/.oh-my-zsh" ]; then
-                sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-            fi
-
-            # Install zsh-autosuggestions
-            if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
-                git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-            fi
-
-            # Install zsh-syntax-highlighting
-            if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
-                git clone https://github.com/zsh-users/zsh-syntax-highlighting "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-            fi
-
-            # Configure .zshrc plugins
-            if grep -q "^plugins=" "$HOME/.zshrc" 2>/dev/null; then
-                sed -i 's/^plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
-            fi
-
-            # Install Atuin
-            sudo pacman -S --needed --noconfirm atuin
-
-
-
-            grep -q "=== apps.sh managed block" "$HOME/.zshrc" 2>/dev/null || cat >> "$HOME/.zshrc" << 'ZSHEOF'
-# === apps.sh managed block - do not edit manually ===
-eval "$(atuin init zsh)"
-
-alias lsa="ls -a"
-alias update="~/.updater.sh"
-alias scan="clamscan -r"
-alias trm="trash-put"
-alias trestore="trash-restore"
-alias tbin="trash-empty"
-alias listt="trash-list"
-alias copy="wl-copy <"
-alias paste="wl-paste >"
-alias rkscan="sudo rkhunter --check --sk"
-
-if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-
-if command -v thefuck &>/dev/null; then
-    eval "$(thefuck --alias)"
-fi
-
-# Opencode
-export PATH="$PATH:$HOME/.opencode/bin"
-if command -v opencode &>/dev/null; then
-    source <(opencode completion zsh 2>/dev/null) 2>/dev/null || true
-fi
-
-# === end of apps.sh block ===
-ZSHEOF
-            echo "Zsh configured at ~/.zshrc"
-            timeout 1s sleep 1
+            configure_zsh
             ;;
 
         '3')
-            clear
-            echo "================================================="
-            echo "                Configuring Fish"
-            echo "================================================="
-
-            # Install fish if not present
-            sudo pacman -S --needed --noconfirm fish
-
-            # Install Atuin
-            sudo pacman -S --needed --noconfirm atuin
-
-
-
-            # Configure fish
-            FISH_CONFIG_DIR="$HOME/.config/fish"
-            FISH_CONFIG_FILE="$FISH_CONFIG_DIR/config.fish"
-            mkdir -p "$FISH_CONFIG_DIR"
-
-            cat > "$FISH_CONFIG_FILE" << 'FISHEOF'
-if status is-interactive
-    set -gx ATUIN_NOBIND true
-    atuin init fish | source
-
-    bind \e\[A _atuin_bind_up
-    bind \cr _atuin_search
-
-    if bind -M insert >/dev/null 2>&1
-        bind -M insert \e\[A _atuin_bind_up
-        bind -M insert \cr _atuin_search
-    end
-
-    bind \e\[3\;5~ kill-word
-    bind \cH backward-kill-word
-end
-
-# Aliases
-alias lsa "ls -a "
-alias update "~/.updater.sh "
-alias scan "clamscan -r "
-alias trm "trash-put "
-alias trestore "trash-restore "
-alias tbin "trash-empty "
-alias listt "trash-list "
-alias copy "wl-copy < "
-alias paste "wl-paste > "
-alias rkscan "sudo rkhunter --check --sk "
-
-# Homebrew
-if test -f /home/linuxbrew/.linuxbrew/bin/brew
-    /home/linuxbrew/.linuxbrew/bin/brew shellenv | source
-end
-
-# Thefuck
-if command -v thefuck >/dev/null
-    thefuck --alias | source
-end
-
-FISHEOF
-            echo "Fish configured at $FISH_CONFIG_FILE"
-            timeout 1s sleep 1
+            configure_fish
             ;;
 
         '4')
-            clear
-            echo "================================================="
-            echo "                Configuring Bash"
-            echo "================================================="
-
-            # Install Atuin
-            sudo pacman -S --needed --noconfirm atuin
-
-            # ble.sh
-            clear
-            echo "Do you want to install ble.sh? (y/n):"
-            while true; do
-                read -t 5 -rp "Answer [y/n]: " reply
-                reply=${reply:-Y}
-                case $reply in
-                    [Yy])
-                        echo "How would you like to install ble.sh?"
-                        echo "1) Git"
-                        echo "2) Nix"
-                        read -p $'\e[32mEnter choice [1-2]: \e[0m' ble_choice
-                        case $ble_choice in
-                            '1')
-                                git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
-                                make -C /tmp/ble.sh install PREFIX="$HOME/.local"
-                                grep -q "blesh/ble.sh" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'EOF'
-
-# ble.sh
-[ -f "$HOME/.local/share/blesh/ble.sh" ] && source "$HOME/.local/share/blesh/ble.sh"
-EOF
-                                ;;
-                            '2')
-                                nix profile install nixpkgs#ble-sh
-                                grep -q "blesh/ble.sh" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'EOF'
-
-# ble.sh
-[ -f "$HOME/.local/share/blesh/ble.sh" ] && source "$HOME/.local/share/blesh/ble.sh"
-EOF
-                                ;;
-                            *)
-                                echo "Invalid choice. Skipping ble.sh."
-                                ;;
-                        esac
-                        break
-                        ;;
-                    [Nn])
-                        echo "Skipping ble.sh installation."
-                        break
-                        ;;
-                    *)
-                        echo "Please answer y or n."
-                        ;;
-                esac
-            done
-
-grep -q "=== apps.sh managed block" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'BASHEOF'
-# === apps.sh managed block - do not edit manually ===
-eval "$(atuin init bash)"
-
-[ -f "$HOME/.local/share/blesh/ble.sh" ] && source "$HOME/.local/share/blesh/ble.sh"
-
-alias lsa="ls -a"
-alias update="~/.updater.sh"
-alias scan="clamscan -r"
-alias trm="trash-put"
-alias trestore="trash-restore"
-alias tbin="trash-empty"
-alias listt="trash-list"
-alias copy="wl-copy <"
-alias paste="wl-paste >"
-alias rkscan="sudo rkhunter --check --sk"
-
-# Homebrew
-if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-
-# Thefuck
-if command -v thefuck &>/dev/null; then
-    eval "$(thefuck --alias)"
-fi
-
-# OpenCode
-export PATH="$PATH:$HOME/.opencode/bin"
-if command -v opencode &>/dev/null; then
-    source <(opencode completion bash 2>/dev/null) 2>/dev/null || true
-fi
-
-# === end of apps.sh block ===
-BASHEOF
-            echo "Bash configured at ~/.bashrc"
-            timeout 1s sleep 1
-
-            clear
-            echo "================================================="
-            echo "                Configuring Zsh"
-            echo "================================================="
-
-            # Install zsh
-            sudo pacman -S --needed --noconfirm zsh
-
-            # Install Oh My Zsh
-            if [ ! -d "$HOME/.oh-my-zsh" ]; then
-                sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-            fi
-
-            # Install zsh-autosuggestions
-            if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
-                git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-            fi
-
-            # Install zsh-syntax-highlighting
-            if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
-                git clone https://github.com/zsh-users/zsh-syntax-highlighting "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-            fi
-
-            # Configure .zshrc plugins
-            if grep -q "^plugins=" "$HOME/.zshrc" 2>/dev/null; then
-                sed -i 's/^plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
-            fi
-
-            # Install Atuin
-            sudo pacman -S --needed --noconfirm atuin
-
-
-
-            grep -q "=== apps.sh managed block" "$HOME/.zshrc" 2>/dev/null || cat >> "$HOME/.zshrc" << 'ZSHEOF'
-# === apps.sh managed block - do not edit manually ===
-eval "$(atuin init zsh)"
-
-alias lsa="ls -a"
-alias update="~/.updater.sh"
-alias scan="clamscan -r"
-alias trm="trash-put"
-alias trestore="trash-restore"
-alias tbin="trash-empty"
-alias listt="trash-list"
-alias copy="wl-copy <"
-alias paste="wl-paste >"
-alias rkscan="sudo rkhunter --check --sk"
-
-if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-
-if command -v thefuck &>/dev/null; then
-    eval "$(thefuck --alias)"
-fi
-
-# Opencode
-export PATH="$PATH:$HOME/.opencode/bin"
-if command -v opencode &>/dev/null; then
-    source <(opencode completion zsh 2>/dev/null) 2>/dev/null || true
-fi
-
-# === end of apps.sh block ===
-ZSHEOF
-
-            echo "Zsh configured at ~/.zshrc"
-            timeout 1s sleep 1
-
-            clear
-            echo "================================================="
-            echo "                Configuring Fish"
-            echo "================================================="
-
-            # Install fish if not present
-            sudo pacman -S --needed --noconfirm fish
-
-            # Install Atuin
-            sudo pacman -S --needed --noconfirm atuin
-
-
-
-            # Configure fish
-            FISH_CONFIG_DIR="$HOME/.config/fish"
-            FISH_CONFIG_FILE="$FISH_CONFIG_DIR/config.fish"
-            mkdir -p "$FISH_CONFIG_DIR"
-
-            cat > "$FISH_CONFIG_FILE" << 'FISHEOF'
-if status is-interactive
-    set -gx ATUIN_NOBIND true
-    atuin init fish | source
-
-    bind \e\[A _atuin_bind_up
-    bind \cr _atuin_search
-
-    if bind -M insert >/dev/null 2>&1
-        bind -M insert \e\[A _atuin_bind_up
-        bind -M insert \cr _atuin_search
-    end
-
-    bind \e\[3\;5~ kill-word
-    bind \cH backward-kill-word
-end
-
-# Aliases
-alias lsa "ls -a "
-alias update "~/.updater.sh "
-alias scan "clamscan -r "
-alias trm "trash-put "
-alias trestore "trash-restore "
-alias tbin "trash-empty "
-alias listt "trash-list "
-alias copy "wl-copy < "
-alias paste "wl-paste > "
-alias rkscan "sudo rkhunter --check --sk "
-
-# Homebrew
-if test -f /home/linuxbrew/.linuxbrew/bin/brew
-    /home/linuxbrew/.linuxbrew/bin/brew shellenv | source
-end
-
-# Thefuck
-if command -v thefuck >/dev/null
-    thefuck --alias | source
-end
-
-FISHEOF
-            echo "Fish configured at $FISH_CONFIG_FILE"
-            timeout 1s sleep 1
+            configure_bash
+            configure_zsh
+            configure_fish
             ;;
 
         '5')

@@ -101,10 +101,53 @@ echo "4) No, Don't Setup Firejail & AppArmor"
 # Use ANSI escape codes for colored prompt
 read -p $'\e[32mEnter choice [1-4]: \e[0m' choice
 
+setup_firejail_configs() {
+    sudo mkdir -p /etc/firejail/firecfg.d
+    mkdir -p "$HOME/.config/firejail"
+    mkdir -p "$HOME/Allowed"
+    mkdir -p "$HOME/Allowed/AllowedCodes"
+    mkdir -p "$HOME/Allowed/AllowedDocs"
+    mkdir -p "$HOME/Allowed/AllowedDownloads"
+    mkdir -p "$HOME/Allowed/AllowedPics"
+    mkdir -p "$HOME/.local/share/applications"
+    touch "$HOME/.local/share/applications/helium.desktop"
+
+    cp ~/cachysetup/firejail-configs/helium.profile ~/.config/firejail/helium.profile
+    cp ~/cachysetup/firejail-configs/brave.local ~/.config/firejail/brave.local
+    cp ~/cachysetup/firejail-configs/zen-browser.profile ~/.config/firejail/zen-browser.profile
+    cp ~/cachysetup/firejail-configs/mullvad-browser.local ~/.config/firejail/mullvad-browser.local
+    cp ~/cachysetup/firejail-configs/librewolf.local ~/.config/firejail/librewolf.local
+    cp ~/cachysetup/firejail-configs/firefox.local ~/.config/firejail/firefox.local
+    cp ~/cachysetup/firejail-configs/floorp.local ~/.config/firejail/floorp.local
+    cp ~/cachysetup/firejail-configs/codium.local ~/.config/firejail/codium.local
+    cp ~/cachysetup/firejail-configs/code.local ~/.config/firejail/code.local
+
+    sudo tee /etc/firejail/firecfg.d/ExcludedApps.conf > /dev/null << 'EOF'
+    !org.kde.spectacle
+    !spectacle
+    !libreoffice
+    !libreoffice-startcenter
+    !org.libreoffice.LibreOffice
+    !libreoffice-calc
+    !libreoffice-writer
+    !libreoffice-impress
+    !libreoffice-draw
+    !libreoffice-base
+    !libreoffice-math
+    !firefox
+    !floorp-bin
+EOF
+
+    cp ~/.local/share/applications/org.kde.spectacle.desktop ~/cachysetup/firejail-configs/Originals/org.kde.spectacle.desktop
+    rm -f ~/.local/share/applications/org.kde.spectacle.desktop
+
+    sudo firecfg --clean
+    sudo firecfg
+}
+
 case $choice in
     '1')
         # Firejail + AppArmor
-        # Install needed packages & Fixes
         sudo pacman -Syu --noconfirm --needed firejail apparmor apparmor.d plymouth cachyos-plymouth-theme cachyos-plymouth-bootanimation
         sudo systemctl enable --now apparmor
         sudo plymouth-set-default-theme -R cachyos-bootanimation
@@ -170,52 +213,7 @@ EOF
         grep KERNEL_CMDLINE /etc/default/limine || echo "No KERNEL_CMDLINE found!"
         echo ""
 
-        # Make folders
-        sudo mkdir -p /etc/firejail/firecfg.d
-        mkdir -p "$HOME/.config/firejail"
-        mkdir -p "$HOME/Allowed"
-        mkdir -p "$HOME/Allowed/AllowedCodes"
-        mkdir -p "$HOME/Allowed/AllowedDocs"
-        mkdir -p "$HOME/Allowed/AllowedDownloads"
-        mkdir -p "$HOME/Allowed/AllowedPics"
-        mkdir -p "$HOME/.local/share/applications"
-        touch "$HOME/.local/share/applications/helium.desktop"
-
-        # Copy configuration files
-        cp ~/cachysetup/firejail-configs/helium.profile ~/.config/firejail/helium.profile
-        cp ~/cachysetup/firejail-configs/brave.local ~/.config/firejail/brave.local
-        cp ~/cachysetup/firejail-configs/zen-browser.profile ~/.config/firejail/zen-browser.profile
-        cp ~/cachysetup/firejail-configs/mullvad-browser.local ~/.config/firejail/mullvad-browser.local
-        cp ~/cachysetup/firejail-configs/librewolf.local ~/.config/firejail/librewolf.local
-        cp ~/cachysetup/firejail-configs/firefox.local ~/.config/firejail/firefox.local
-        cp ~/cachysetup/firejail-configs/floorp.local ~/.config/firejail/floorp.local
-        cp ~/cachysetup/firejail-configs/codium.local ~/.config/firejail/codium.local
-        cp ~/cachysetup/firejail-configs/code.local ~/.config/firejail/code.local
-
-        # Excluded Apps
-        sudo tee /etc/firejail/firecfg.d/ExcludedApps.conf > /dev/null << 'EOF'
-        !org.kde.spectacle
-        !spectacle
-        !libreoffice
-        !libreoffice-startcenter
-        !org.libreoffice.LibreOffice
-        !libreoffice-calc
-        !libreoffice-writer
-        !libreoffice-impress
-        !libreoffice-draw
-        !libreoffice-base
-        !libreoffice-math
-        !firefox
-        !floorp-bin
-EOF
-
-        # Remove any spectacle.desktop
-        cp ~/.local/share/applications/org.kde.spectacle.desktop ~/cachysetup/firejail-configs/Originals/org.kde.spectacle.desktop
-        rm -f ~/.local/share/applications/org.kde.spectacle.desktop
-
-        # Rebuild firecfg links & Restart AppArmor
-        sudo firecfg --clean
-        sudo firecfg
+        setup_firejail_configs
         sudo systemctl reload apparmor
 
         clear
@@ -229,57 +227,11 @@ EOF
         ;;
 
     '2')
-        # Firejail
-        # Install needed packages & Fixes
+        # Firejail only
         sudo pacman -Syu --noconfirm --needed firejail plymouth cachyos-plymouth-theme cachyos-plymouth-bootanimation
         sudo plymouth-set-default-theme -R cachyos-bootanimation
 
-        # Make folders
-        sudo mkdir -p /etc/firejail/firecfg.d
-        mkdir -p "$HOME/.config/firejail"
-        mkdir -p "$HOME/Allowed"
-        mkdir -p "$HOME/Allowed/AllowedCodes"
-        mkdir -p "$HOME/Allowed/AllowedDocs"
-        mkdir -p "$HOME/Allowed/AllowedDownloads"
-        mkdir -p "$HOME/Allowed/AllowedPics"
-        mkdir -p "$HOME/.local/share/applications"
-        touch "$HOME/.local/share/applications/helium.desktop"
-
-        # Copy configuration files
-        cp ~/cachysetup/firejail-configs/helium.profile ~/.config/firejail/helium.profile
-        cp ~/cachysetup/firejail-configs/brave.local ~/.config/firejail/brave.local
-        cp ~/cachysetup/firejail-configs/zen-browser.profile ~/.config/firejail/zen-browser.profile
-        cp ~/cachysetup/firejail-configs/mullvad-browser.local ~/.config/firejail/mullvad-browser.local
-        cp ~/cachysetup/firejail-configs/librewolf.local ~/.config/firejail/librewolf.local
-        cp ~/cachysetup/firejail-configs/firefox.local ~/.config/firejail/firefox.local
-        cp ~/cachysetup/firejail-configs/floorp.local ~/.config/firejail/floorp.local
-        cp ~/cachysetup/firejail-configs/codium.local ~/.config/firejail/codium.local
-        cp ~/cachysetup/firejail-configs/code.local ~/.config/firejail/code.local
-
-        # Excluded Apps
-        sudo tee /etc/firejail/firecfg.d/ExcludedApps.conf > /dev/null << 'EOF'
-        !org.kde.spectacle
-        !spectacle
-        !libreoffice
-        !libreoffice-startcenter
-        !org.libreoffice.LibreOffice
-        !libreoffice-calc
-        !libreoffice-writer
-        !libreoffice-impress
-        !libreoffice-draw
-        !libreoffice-base
-        !libreoffice-math
-        !firefox
-        !floorp-bin
-EOF
-
-        # Remove any spectacle.desktop
-        cp ~/.local/share/applications/org.kde.spectacle.desktop ~/cachysetup/firejail-configs/Originals/org.kde.spectacle.desktop
-        rm -f ~/.local/share/applications/org.kde.spectacle.desktop
-
-        # Rebuild firecfg links & Restart AppArmor
-        sudo firecfg --clean
-        sudo firecfg
+        setup_firejail_configs
         ;;
 
     '3')
