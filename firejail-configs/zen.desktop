@@ -1,0 +1,26 @@
+[Desktop Entry]
+Name=Zen Browser
+Comment=Experience tranquillity while browsing the web without people tracking you!
+Exec=firejail --profile=$HOME/.config/firejail/zen-browser.profile /opt/zen-browser-bin/zen-bin %u
+Icon=zen-browser
+Type=Application
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;application/x-xpinstall;application/pdf;application/json;
+StartupWMClass=zen
+Categories=Network;WebBrowser;
+StartupNotify=true
+Terminal=false
+X-MultipleArgs=false
+Keywords=Internet;WWW;Browser;Web;Explorer;
+Actions=new-window;new-private-window;profilemanager;
+
+[Desktop Action new-window]
+Name=Open a New Window
+Exec=firejail --profile=$HOME/.config/firejail/zen-browser.profile --join-or-start=zen-sandbox /opt/zen-browser-bin/zen-bin --new-window %u
+
+[Desktop Action new-private-window]
+Name=Open a New Private Window
+Exec=firejail --profile=$HOME/.config/firejail/zen-browser.profile --join-or-start=zen-sandbox /opt/zen-browser-bin/zen-bin --private-window %u
+
+[Desktop Action profilemanager]
+Name=Open the Profile Manager
+Exec=firejail --profile=$HOME/.config/firejail/zen-browser.profile --join-or-start=zen-sandbox /opt/zen-browser-bin/zen-bin --ProfileManager %u

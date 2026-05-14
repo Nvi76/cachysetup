@@ -1,0 +1,22 @@
+# Fixes
+ignore read-only ${HOME}/.config/mozilla/firefox/profiles.ini
+ignore read-only ${HOME}/.mozilla/firefox/profiles.ini
+
+# Enable Wayland
+env MOZ_ENABLE_WAYLAND=1
+whitelist ${RUNUSER}/wayland-0
+dbus-user.talk org.freedesktop.portal.Desktop
+dbus-user.talk org.freedesktop.portal.Documents
+
+# Mozilla Folders
+noblacklist ${HOME}/.config/mozilla
+noblacklist ${HOME}/.cache/mozilla
+noblacklist ${HOME}/.mozilla
+
+# Whitelisted Folders
+whitelist ${HOME}/.config/mozilla
+whitelist ${HOME}/.mozilla
+whitelist ${HOME}/Allowed
+
+# Allow DBus access for profile management (optional, helps with some profile issues)
+ignore include whitelist-runuser-common.inc

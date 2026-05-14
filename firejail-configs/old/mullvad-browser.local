@@ -1,0 +1,12 @@
+# Whitelisted Folders
+whitelist ${HOME}/Documents/AllowedDocs
+whitelist ${HOME}/Pictures/AllowedPics
+
+# Config for mullvad-browser
+#if [ ! -f "$HOME/.config/firejail/mullvad-browser.local" ]; then
+#cat << EOF > "$HOME/.config/firejail/mullvad-browser.local"
+# Whitelisted Folders
+#whitelist ${HOME}/Documents/AllowedDocs
+#whitelist ${HOME}/Pictures/AllowedPics
+#EOF
+#fi

@@ -1,0 +1,6 @@
+# Whitelisted Folders
+whitelist ${HOME}/Documents/AllowedDocs
+whitelist ${HOME}/Pictures/AllowedPics
+
+# Allow DBus access for profile management (optional, helps with some profile issues)
+ignore include whitelist-runuser-common.inc
