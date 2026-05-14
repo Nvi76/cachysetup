@@ -25,6 +25,8 @@ ssh-keygen -t ed25519 -C "your_email@example.com"
 
 ```bash
 cd ~/Projects/Scripts/cachysetup
+git remote add origin git@github.com:YOUR_USERNAME/cachysetup.git
+git init
 git remote set-url origin git@github.com:YOUR_USERNAME/cachysetup.git
 git add .
 git commit -m "Initial setup"
