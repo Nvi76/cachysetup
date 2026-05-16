@@ -1,273 +1,59 @@
 #!/usr/bin/env bash
 
-# Update system
-paru -Syu --noconfirm || exit 1
+# Functions
+yn_default() {
+    local prompt="$1"
+    local confirm_msg="$2"
+    local skip_msg="$3"
+    clear
+    echo "${prompt}"
+    while true; do
+        read -t 5 -p "Answer [y/n]: " reply
+        if [ -z "$reply" ]; then
+            reply="Y"
+        fi
+        case $reply in
+            Y|y)
+                echo "${confirm_msg}"
+                return 0
+                ;;
+            N|n)
+                echo "${skip_msg}"
+                return 1
+                ;;
+            *)
+                echo "Please enter 'y' or 'n'."
+                ;;
+        esac
+    done
+}
 
-# Install Apps
-sudo pacman -S --noconfirm --needed gimp discover kdenlive localsend vulkan-tools os-prober mesa-utils \
-ffmpeg distrobox podman fzf ranger btop thefuck trash-cli fastfetch gnupg cava fish neovim figlet tmux atuin \
-python-pipx tk wl-clipboard
+yn_second() {
+    local prompt="$1"
+    local confirm_msg="$2"
+    local skip_msg="$3"
+    clear
+    echo "${prompt}"
+    while true; do
+        read -t 5 -rp "Answer [y/n]: " reply
+        reply=${reply:-N}
+        case "$reply" in
+            [Yy])
+                echo "${confirm_msg}"
+                return 0
+                ;;
+            [Nn])
+                echo "${skip_msg}"
+                return 1
+                ;;
+            *)
+                echo "Please answer y or n."
+                ;;
+        esac
+    done
+}
 
-paru -S --nonconfirm --needed logseq-desktop-bin zapzap
-
-# Installing Browsers
-clear
-echo "========================================="
-echo "           Installing Browsers"
-echo "========================================="
-timeout 2s sleep 2
-
-# Helium Browser
-clear
-echo "Do you want to install Helium Browser? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing browser..."
-                if pacman -Qs firejail &>/dev/null; then
-                    paru -S --needed helium-browser-bin
-                    sudo cp ~/cachysetup/firejail-configs/helium.desktop /usr/share/applications/helium.desktop
-                    cp ~/cachysetup/firejail-configs/helium.desktop ~/.local/share/applications/helium.desktop
-                else
-                    sudo pacman -S --noconfirm --needed helium-browser-bin
-                fi
-            break
-            ;;
-        N|n)
-            echo "Skipping browser installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Zen Browser
-clear
-echo "Do you want to install Zen Browser? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing browser..."
-                if pacman -Qs firejail &>/dev/null; then
-                    paru -S --needed zen-browser-bin
-                    sudo cp ~/cachysetup/firejail-configs/zen.desktop /usr/share/applications/zen.desktop
-                    cp ~/cachysetup/firejail-configs/zen.desktop ~/.local/share/applications/zen.desktop
-                else
-                    sudo pacman -S --noconfirm --needed zen-browser-bin
-                fi
-            break
-            ;;
-        N|n)
-            echo "Skipping browser installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Mullvad Browser
-clear
-echo "Do you want to install Mullvad Browser? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing browser..."
-                sudo pacman -S --noconfirm --needed mullvad-browser-bin
-            break
-            ;;
-        N|n)
-            echo "Skipping browser installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Librewolf Browser
-clear
-echo "Do you want to install Librewolf? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing browser..."
-                sudo pacman -S --noconfirm --needed librewolf-bin
-            break
-            ;;
-        N|n)
-            echo "Skipping browser installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Firefox Browser
-clear
-echo "Do you want to install Firefox? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing browser..."
-                sudo pacman -S --noconfirm --needed firefox
-            break
-            ;;
-        N|n)
-            echo "Skipping browser installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Floorp Browser
-clear
-echo "Do you want to install Floorp? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing browser..."
-                sudo pacman -S --noconfirm --needed floorp-bin
-            break
-            ;;
-        N|n)
-            echo "Skipping browser installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-clear
-echo "============================================="
-echo "           Additional Tools & Games          "
-echo "============================================="
-timeout 2s sleep 2
-
-# Flatpak
-clear
-echo "Do you want to install Flatpak? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing Flatpak..."
-                sudo pacman -S --needed --noconfirm flatpak
-
-                # Flathub repo
-                flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-            break
-            ;;
-        N|n)
-            echo "Skipping Flatpak installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Game Dev
-clear
-echo "Do you want to install GameDev Apps? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing Godot & libresprite..."
-                sudo pacman -S --needed --noconfirm godot libresprite
-
-            echo "Installing LDtk"
-                curl -fL \
-                    https://itchio-mirror.cb031a832f44726753d6267436f3b414.r2.cloudflarestorage.com/upload2/game/740403/9503070?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=3edfcce40115d057d0b5606758e7e9ee%2F20260505%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260505T142657Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&X-Amz-Signature=75fafce31d8729e512db446c0c5f9f16a8590dec129accad7ef14a5da1785195 \
-                    -o LDtk.zip || exit 1
-
-                unzip LDtk.zip
-                paru -S --needed --noconfirm gearlever
-                gearlever ~/cachysetup/LDtk*.AppImage
-
-                trash-put LDtk.zip
-                break
-            ;;
-        N|n)
-            echo "Skipping GameDev Apps installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Games
-clear
-echo "Do you want to install Games aswell? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing Games..."
-            flatpak install flathub org.luanti.luanti info.beyondallreason.bar org.openttd.OpenTTD net.openra.OpenRA net.wz2100.wz2100 --noninteractive
-            break
-            ;;
-        N|n)
-            echo "Skipping installation of games."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
-
-# Educational Apps
-function edu_apps() {
+edu_apps() {
     echo "Select packages to install:"
     echo "1) Preschool (TK)"
     echo "2) Primary (SD)"
@@ -301,76 +87,115 @@ function edu_apps() {
     fi
 }
 
+# Update system
+paru -Syu --noconfirm || exit 1
+
+# Install Apps
+sudo pacman -S --noconfirm --needed gimp discover kdenlive localsend vulkan-tools os-prober mesa-utils \
+ffmpeg distrobox podman fzf ranger btop thefuck trash-cli fastfetch gnupg cava fish neovim figlet tmux atuin \
+python-pipx tk wl-clipboard
+
+paru -S --nonconfirm --needed logseq-desktop-bin zapzap
+
+# Installing Browsers
 clear
-echo "Do you want to Educational Apps? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing Educational Apps..."
+echo "========================================="
+echo "           Installing Browsers"
+echo "========================================="
+timeout 2s sleep 2
+
+# Helium Browser
+if yn_default "Do you want to install Helium Browser? (y/n):" "Installing browser..." "Skipping browser installation."; then
+                if pacman -Qs firejail &>/dev/null; then
+                    paru -S --needed helium-browser-bin
+                    sudo cp ~/cachysetup/firejail-configs/helium.desktop /usr/share/applications/helium.desktop
+                    cp ~/cachysetup/firejail-configs/helium.desktop ~/.local/share/applications/helium.desktop
+                else
+                    sudo pacman -S --noconfirm --needed helium-browser-bin
+                fi
+fi
+
+# Zen Browser
+if yn_default "Do you want to install Zen Browser? (y/n):" "Installing browser..." "Skipping browser installation."; then
+                if pacman -Qs firejail &>/dev/null; then
+                    paru -S --needed zen-browser-bin
+                    sudo cp ~/cachysetup/firejail-configs/zen.desktop /usr/share/applications/zen.desktop
+                    cp ~/cachysetup/firejail-configs/zen.desktop ~/.local/share/applications/zen.desktop
+                else
+                    sudo pacman -S --noconfirm --needed zen-browser-bin
+                fi
+fi
+
+# Mullvad Browser
+if yn_default "Do you want to install Mullvad Browser? (y/n):" "Installing browser..." "Skipping browser installation."; then
+                sudo pacman -S --noconfirm --needed mullvad-browser-bin
+fi
+
+# Librewolf Browser
+if yn_default "Do you want to install Librewolf? (y/n):" "Installing browser..." "Skipping browser installation."; then
+                sudo pacman -S --noconfirm --needed librewolf-bin
+fi
+
+# Firefox Browser
+if yn_default "Do you want to install Firefox? (y/n):" "Installing browser..." "Skipping browser installation."; then
+                sudo pacman -S --noconfirm --needed firefox
+fi
+
+# Floorp Browser
+if yn_default "Do you want to install Floorp? (y/n):" "Installing browser..." "Skipping browser installation."; then
+                sudo pacman -S --noconfirm --needed floorp-bin
+fi
+
+clear
+echo "============================================="
+echo "           Additional Tools & Games          "
+echo "============================================="
+timeout 2s sleep 2
+
+# Flatpak
+if yn_default "Do you want to install Flatpak? (y/n):" "Installing Flatpak..." "Skipping Flatpak installation."; then
+                sudo pacman -S --needed --noconfirm flatpak
+
+                # Flathub repo
+                flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+fi
+
+# Game Dev
+if yn_default "Do you want to install GameDev Apps? (y/n):" "Installing Godot & libresprite..." "Skipping GameDev Apps installation."; then
+                sudo pacman -S --needed --noconfirm godot libresprite
+
+            echo "Installing LDtk"
+                curl -fL \
+                    https://itchio-mirror.cb031a832f44726753d6267436f3b414.r2.cloudflarestorage.com/upload2/game/740403/9503070?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=3edfcce40115d057d0b5606758e7e9ee%2F20260505%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260505T142657Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&X-Amz-Signature=75fafce31d8729e512db446c0c5f9f16a8590dec129accad7ef14a5da1785195 \
+                    -o LDtk.zip || exit 1
+
+                unzip LDtk.zip
+                paru -S --needed --noconfirm gearlever
+                gearlever ~/cachysetup/LDtk*.AppImage
+
+                trash-put LDtk.zip
+fi
+
+# Games
+if yn_default "Do you want to install Games aswell? (y/n):" "Installing Games..." "Skipping installation of games."; then
+            flatpak install flathub org.luanti.luanti info.beyondallreason.bar org.openttd.OpenTTD net.openra.OpenRA net.wz2100.wz2100 --noninteractive
+fi
+
+# Educational Apps
+if yn_default "Do you want to Educational Apps? (y/n):" "Installing Educational Apps..." "Skipping installation of Educational Apps..."; then
             edu_apps
-            break
-            ;;
-        N|n)
-            echo "Skipping installation of Educational Apps..."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
+fi
 
 # Codium
-clear
-echo "Do you want to install VSCodium (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing VSCodium..."
+if yn_default "Do you want to install VSCodium (y/n):" "Installing VSCodium..." "Skipping VSCodium installation."; then
                 sudo pacman -S --needed --noconfirm vscodium
-            break
-            ;;
-        N|n)
-            echo "Skipping VSCodium installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
+fi
 
 # Code
-clear
-echo "Do you want to install VSCode (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing VSCode..."
+if yn_default "Do you want to install VSCode (y/n):" "Installing VSCode..." "Skipping VSCode installation."; then
                 paru -S --needed visual-studio-code-bin
-            break
-            ;;
-        N|n)
-            echo "Skipping VSCode installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
+fi
 
 # AI Tools
 clear
@@ -380,40 +205,12 @@ echo "=========================================="
 timeout 2s sleep 2
 
 # Ollama
-clear
-echo "Do you want to install Ollama? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing Ollama..."
+if yn_default "Do you want to install Ollama? (y/n):" "Installing Ollama..." "Skipping Ollama installation."; then
             sudo pacman -S --needed --noconfirm ollama
-            break
-            ;;
-        N|n)
-            echo "Skipping Ollama installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
+fi
 
 # Oterm
-clear
-echo "Do you want to install Oterm? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing Oterm..."
+if yn_default "Do you want to install Oterm? (y/n):" "Installing Oterm..." "Skipping Oterm installation."; then
             paru -S --needed --noconfirm oterm
 
             mkdir -p "$(oterm --data-dir 2>/dev/null || echo ~/.local/share/oterm)" && \
@@ -424,65 +221,17 @@ while true; do
             echo '{"splash-screen": false}' > "$config"
             fi
 
-            break
-            ;;
-        N|n)
-            echo "Skipping Oterm installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
+fi
 
 # OpenCode
-clear
-echo "Do you want to install OpenCode? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing OpenCode..."
+if yn_default "Do you want to install OpenCode? (y/n):" "Installing OpenCode..." "Skipping OpenCode installation."; then
             sudo pacman -S --needed --noconfirm opencode
-            break
-            ;;
-        N|n)
-            echo "Skipping OpenCode installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
+fi
 
 # Alpaca
-clear
-echo "Do you want to install Alpaca? (y/n):"
-while true; do
-    read -t 5 -p "Answer [y/n]: " reply
-    if [ -z "$reply" ]; then
-        reply="Y"
-    fi
-    case $reply in
-        Y|y)
-            echo "Installing Alpaca..."
+if yn_default "Do you want to install Alpaca? (y/n):" "Installing Alpaca..." "Skipping Alpaca installation."; then
             paru -S --needed --noconfirm alpaca-ai
-            break
-            ;;
-        N|n)
-            echo "Skipping Alpaca installation."
-            break
-            ;;
-        *)
-            echo "Please enter 'y' or 'n'."
-            ;;
-    esac
-done
+fi
 
 # Run ai_confs.sh if Ollama or OpenCode were installed
 has_ollama=$(command -v ollama)
@@ -674,9 +423,9 @@ echo "======================="
 echo "     50% Complete      "
 echo "======================="
 
-# Installing LazyVim
+# Configuring LazyVim
 echo "============================"
-echo "     Installing LazyVim     "
+echo "    Configuring LazyVim     "
 echo "============================"
 
 mv ~/.config/nvim ~/.config/nvim.bak 2>/dev/null || true
@@ -815,46 +564,36 @@ alias rkscan="sudo rkhunter --check --sk"
 alias kate="flatpak run org.kde.kate"
 
 # Extra functions
-function gitpush_installscript() {
+gitpush_installscript() {
     cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
-    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
 }
 
-# Add your other functions here
+# Copy Ai models to folder
+ollama_model() {
+  local model_name=$1
 
-blesh_optimize() {
-    local blesh_dir="${XDG_DATA_HOME:-$HOME/.local/share}/blesh"
-    local blerc="${XDG_CONFIG_HOME:-$HOME/.config}/blesh/init.sh"
+  if [ -z "$model_name" ]; then
+    echo "Usage: copy_ollama_model <model-name>"
+    return 1
+  fi
 
-    if [[ ! -f "$blesh_dir/ble.sh" ]]; then
-        echo "Installing ble.sh..."
-        git clone --recursive --depth 1 --shallow-submodules "https://github.com/akinomyoga/ble.sh.git" "$blesh_dir"
-        make -C "$blesh_dir" install PREFIX="${XDG_DATA_HOME:-$HOME}/.local" strip_comment=yes
-        mkdir -p "$(dirname "$blerc")"
-    fi
+  ollama export "$model_name" "./${model_name//:/_}.bin"
+  echo "Model '$model_name' exported to $(pwd)/${model_name//:/_}.bin"
+}
 
-    cat > "$blerc" << 'EOF'
-# Performance-optimized ble.sh settings
-bleopt complete_auto_delay=200
-bleopt highlight_syntax=
-bleopt complete_auto_history=
+ollama_models_all() {
+  local export_dir="./ollama-backup"
+  mkdir -p "$export_dir"
 
-# History limits to reduce overhead
-HISTSIZE=5000
-HISTFILESIZE=10000
-shopt -s histappend
+  ollama list --format json | jq -r '.[].name' | while read model; do
+    echo "Exporting $model..."
+    ollama export "$model" "$export_dir/${model//:/_}.bin"
+  done
 
-# Visual bell
-bleopt edit_bell=vbell
-EOF
-
-    if [[ $- == *i* ]] && [[ ! ${BLE_VERSION:-} ]]; then
-        source "$blesh_dir/ble.sh" --attach=auto
-        echo "ble.sh installed and optimized! Restart shell or run 'ble-attach'."
-    fi
+  echo "All models exported to $export_dir"
 }
 
 # Homebrew
@@ -885,11 +624,8 @@ BASHEOF
         echo "               Configuring Zsh"
         echo "================================================="
 
-        # Install & Configure zsh
-        sudo pacman -S --needed --noconfirm zsh
-
-        # Install Atuin
-        sudo pacman -S --needed --noconfirm atuin
+        # Install Zsh & Atuin
+        sudo pacman -S --needed --noconfirm zsh atuin
 
             grep -q "=== apps.sh managed block" "$HOME/.zshrc" 2>/dev/null || cat >> "$HOME/.zshrc" << 'ZSHEOF'
 # === apps.sh managed block - do not edit manually ===
@@ -909,15 +645,37 @@ alias rkscan="sudo rkhunter --check --sk"
 alias kate="flatpak run org.kde.kate"
 
 # Extra functions
-function gitpush_installscript() {
+gitpush_installscript() {
     cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
-    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
 }
 
-# Add your other functions here
+# Copy Ai models to folder
+ollama_model() {
+  local model_name=$1
+
+  if [ -z "$model_name" ]; then
+    echo "Usage: copy_ollama_model <model-name>"
+    return 1
+  fi
+
+  ollama export "$model_name" "./${model_name//:/_}.bin"
+  echo "Model '$model_name' exported to $(pwd)/${model_name//:/_}.bin"
+}
+
+ollama_models_all() {
+  local export_dir="./ollama-backup"
+  mkdir -p "$export_dir"
+
+  ollama list --format json | jq -r '.[].name' | while read model; do
+    echo "Exporting $model..."
+    ollama export "$model" "$export_dir/${model//:/_}.bin"
+  done
+
+  echo "All models exported to $export_dir"
+}
 
 # Homebrew
 if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
@@ -947,13 +705,8 @@ ZSHEOF
         echo "                Configuring Fish"
         echo "================================================="
 
-        # Install fish if not present
-        if command -v fish &>/dev/null; then
-            sudo pacman -S --needed --noconfirm fish
-        fi
-
-        # Install Atuin
-        sudo pacman -S --needed --noconfirm atuin
+        # Install Fish & Atuin
+        sudo pacman -S --needed --noconfirm fish atuin
 
         # Configure fish
         FISH_CONFIG_DIR="$HOME/.config/fish"
@@ -996,10 +749,32 @@ function gitpush_installscript
     cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
-    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
 end
 
-# Add your other functions here
+# Copy Ai models to folder
+function ollama_model
+    local model_name=$1
+
+    if [ -z "$model_name" ]; then
+        echo "Usage: copy_ollama_model <model-name>"
+        return 1
+    fi
+
+    ollama export "$model_name" "./${model_name//:/_}.bin"
+    echo "Model '$model_name' exported to $(pwd)/${model_name//:/_}.bin"
+end
+
+function ollama_models_all
+    local export_dir="./ollama-backup"
+    mkdir -p "$export_dir"
+
+    ollama list --format json | jq -r '.[].name' | while read model; do
+        echo "Exporting $model..."
+        ollama export "$model" "$export_dir/${model//:/_}.bin"
+    done
+
+    echo "All models exported to $export_dir"
+end
 
 # Homebrew
 if test -f /home/linuxbrew/.linuxbrew/bin/brew
@@ -1010,7 +785,6 @@ end
 if command -v thefuck >/dev/null
     thefuck --alias | source
 end
-
 FISHEOF
         echo "Fish configured at $FISH_CONFIG_FILE"
         timeout 1s sleep 1

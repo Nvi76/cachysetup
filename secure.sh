@@ -1,6 +1,59 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Functions
+yn_default() {
+    local prompt="$1"
+    local confirm_msg="$2"
+    local skip_msg="$3"
+    clear
+    echo "${prompt}"
+    while true; do
+        read -t 5 -p "Answer [y/n]: " reply
+        if [ -z "$reply" ]; then
+            reply="Y"
+        fi
+        case $reply in
+            Y|y)
+                echo "${confirm_msg}"
+                return 0
+                ;;
+            N|n)
+                echo "${skip_msg}"
+                return 1
+                ;;
+            *)
+                echo "Please enter 'y' or 'n'."
+                ;;
+        esac
+    done
+}
+
+yn_second() {
+    local prompt="$1"
+    local confirm_msg="$2"
+    local skip_msg="$3"
+    clear
+    echo "${prompt}"
+    while true; do
+        read -t 5 -rp "Answer [y/n]: " reply
+        reply=${reply:-N}
+        case "$reply" in
+            [Yy])
+                echo "${confirm_msg}"
+                return 0
+                ;;
+            [Nn])
+                echo "${skip_msg}"
+                return 1
+                ;;
+            *)
+                echo "Please answer y or n."
+                ;;
+        esac
+    done
+}
+
 # Ensure sudo access
 sudo -v
 
@@ -327,40 +380,15 @@ esac
 # Install Portmaster
 paru -S --noconfirm portmaster-bin traur-bin
 
-# Install Additional
-clear
-echo "Do you want to install Additional tool? (Might not be needed for desktop usage) (y/n)"
+if yn_second "Do you want to install Additional tool? (Might not be needed for desktop usage) (y/n)" "Installing tools..." "Skipping installation."; then
+    sudo pacman -S --needed --noconfirm \
+        proton-vpn-cli \
+        torbrowser-launcher
 
-while true; do
-    read -t 5 -rp "Answer [y/n]: " reply
-    reply=${reply:-N}
-
-    case "$reply" in
-        [Yy])
-
-            echo "Installing tools..."
-
-            sudo pacman -S --needed --noconfirm \
-                proton-vpn-cli \
-                torbrowser-launcher
-
-            sudo systemctl start proton-vpn-daemon.service
-            protonvpn-cli login
-            protonvpn connect --fastest > /dev/null
-
-            break
-            ;;
-
-        [Nn])
-            echo "Skipping installation."
-            break
-            ;;
-
-        *)
-            echo "Please answer y or n."
-            ;;
-    esac
-done
+    sudo systemctl start proton-vpn-daemon.service
+    protonvpn-cli login
+    protonvpn connect --fastest > /dev/null
+fi
 
 # Additionals2
 clear
@@ -383,67 +411,43 @@ install_browser() {
     fi
 }
 
-# Install Additionals2
-echo "Do you want to install Additional tools? (2) (y/n)"
+if yn_second "Do you want to install Additional tools? (2) (y/n)" "Installing tools..." "Skipping installation."; then
+    sudo pacman -S --needed --noconfirm \
+        java-runtime-headless i2pd
 
-while true; do
-    read -t 5 -rp "Answer [y/n]: " reply
-    reply=${reply:-N}
+    sudo systemctl start i2pd > /dev/null 2>&1
 
-    case "$reply" in
-        [Yy])
+    until curl -s http://127.0.0.1:7657 > /dev/null; do
+        sleep 2
+    done
 
-            echo "Installing tools..."
+    found=false
 
-            sudo pacman -S --needed --noconfirm \
-                java-runtime-headless i2pd
+    for browser in "${BROWSERS[@]}"; do
+        if command -v "$browser" &>/dev/null; then
+            echo "Launching $browser..."
+            "$browser" "$URL" >/dev/null 2>&1 &
+            found=true
+        fi
+    done
 
-            sudo systemctl start i2pd > /dev/null 2>&1
+    if ! $found; then
+    echo "No supported browser found."
+    echo "No supported browser found."
+    echo "No supported browser found."
+    echo "Select one to install:"
+    echo "1) firefox"
+    echo "2) floorp"
 
-            until curl -s http://127.0.0.1:7657 > /dev/null; do
-                sleep 2
-            done
+    read -rp "Choice [1-2]: " choice
 
-            found=false
-
-            for browser in "${BROWSERS[@]}"; do
-                if command -v "$browser" &>/dev/null; then
-                    echo "Launching $browser..."
-                    "$browser" "$URL" >/dev/null 2>&1 &
-                    found=true
-                fi
-            done
-
-            if ! $found; then
-            echo "No supported browser found."
-            echo "No supported browser found."
-            echo "No supported browser found."
-            echo "Select one to install:"
-            echo "1) firefox"
-            echo "2) floorp"
-
-            read -rp "Choice [1-2]: " choice
-
-            case "$choice" in
-                1) install_browser "firefox" ;;
-                2) install_browser "floorp" ;;
-                *) echo "Invalid option" ;;
-            esac
-
-            break
-            fi
-            ;;
-
-        [Nn])
-            echo "Skipping installation."
-            break
-            ;;
-
-        *)
-            echo "Please answer y or n."
-            ;;
+    case "$choice" in
+        1) install_browser "firefox" ;;
+        2) install_browser "floorp" ;;
+        *) echo "Invalid option" ;;
     esac
-done
+    fi
+fi
 
 # Config ClamvAV
 sudo touch /var/log/clamav/freshclam.log
