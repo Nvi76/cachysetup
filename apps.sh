@@ -512,7 +512,7 @@ read -p "Enter choice [1-5]: " choice
             echo "No AUR helper found. Installing paru..."
             sudo pacman -S --needed base-devel git || exit 1
             git clone https://aur.archlinux.org/paru-bin.git || exit 1
-            cd paru-bin; makepkg -si; cd ..; rm -rf paru-bin || exit 1
+            cd paru-bin && makepkg -si && cd .. && rm -rf paru-bin || exit 1
         fi
 
 case $choice in
@@ -558,7 +558,7 @@ esac
 echo "================================================"
 echo "        Nvidia Driver Installation (AUR)"
 echo "================================================"
-read -p "Install NVIDIA 580xx drivers? [y/N] incase the one on the repo doesn't exist': " install_nvidia
+read -p "Install NVIDIA 580xx drivers? [y/N] (incase the one on the repo doesn't exist): " install_nvidia
 
 if [ "$install_nvidia" = "y" ] || [ "$install_nvidia" = "Y" ]; then
     echo "Installing NVIDIA 580xx drivers..."
@@ -663,7 +663,7 @@ sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
 
 # Configuring nix
 mkdir -p ~/.config/nix
-echo 'experimental-features = nix-command' >> ~/.config/nix/nix.conf   
+grep -q 'experimental-features = nix-command' ~/.config/nix/nix.conf 2>/dev/null || echo 'experimental-features = nix-command' >> ~/.config/nix/nix.conf
 
 # Load Homebrew for current session
 if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
@@ -820,6 +820,7 @@ function gitpush_installscript() {
     cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
 }
 
 # Add your other functions here
@@ -913,6 +914,7 @@ function gitpush_installscript() {
     cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
 }
 
 # Add your other functions here
@@ -994,6 +996,7 @@ function gitpush_installscript
     cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
     cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
 end
 
 # Add your other functions here

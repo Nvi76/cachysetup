@@ -354,6 +354,7 @@ detect_and_enable_model_capabilities() {
   model_info="$(ollama show "$model" 2>/dev/null || true)"
 
   local capabilities="{}"
+  local model_options="{}"
 
   local cap_tools="false"
   local cap_vision="false"
@@ -429,12 +430,16 @@ detect_and_enable_model_capabilities() {
       json_output: $json_output
     }')"
 
+  if [[ "$cap_tools" == "true" || "$cap_function_calling" == "true" ]]; then
+    model_options="$(jq -n '{tools: true, function_calling: true}')"
+  fi
+
   local tmp
   tmp="$(mktemp)"
   cp "$OPENCODE_CONFIG_FILE" "$tmp"
 
-  jq --arg model "$model" --argjson caps "$capabilities" \
-    '.provider.ollama.models[$model].capabilities = $caps' \
+  jq --arg model "$model" --argjson caps "$capabilities" --argjson opts "$model_options" \
+    '.provider.ollama.models[$model].capabilities = $caps | .provider.ollama.models[$model].options = $opts' \
     "$tmp" > "${tmp}.new"
 
   mv "${tmp}.new" "$tmp"
