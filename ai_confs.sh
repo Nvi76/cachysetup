@@ -131,27 +131,20 @@ wait_for_ollama() {
 
 install_instructions() {
   echo
-  echo "Installation commands (Arch Linux):"
+  echo "Installation commands (Arch Linux / CachyOS):"
   echo
   echo "Ollama:"
   echo "  sudo pacman -S --needed ollama"
-  echo "  or: curl -fsSL https://ollama.com/install.sh | sh"
   echo
   echo "OpenCode:"
   echo "  sudo pacman -S --needed opencode"
-  echo "  or: curl -fsSL https://opencode.ai/install | bash"
   echo
   echo "Alpaca:"
   echo "  paru -S --needed alpaca-ai"
-  echo "  or: flatpak install flathub com.jeffser.Alpaca --noninteractive"
   echo
 }
 
 show_target_menu() {
-  echo
-  echo "========================================================="
-  echo "               AI Tools Configuration"
-  echo "========================================================="
   echo
   echo "Which tool do you want to configure?"
   echo "1) Ollama"

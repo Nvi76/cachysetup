@@ -1,0 +1,519 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# == Package manager==
+update_system() { sudo paru -Syu; }
+enable_svc()    { sudo systemctl enable --now "$@"; }
+
+# == UI helpers ==
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+info()  { echo -e "${YELLOW}➜ $1${NC}"; }
+ok()    { echo -e "${GREEN}✓ $1${NC}"; }
+err()   { echo -e "${RED}✗ $1${NC}"; }
+
+pick() {
+    local prompt="$1" min="$2" max="$3"
+    while true; do
+        read -rp "$prompt " choice
+        [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= min && choice <= max )) && echo "$choice" && return
+        echo "Enter a number $min-$max."
+    done
+}
+
+yn_default() {
+    local prompt="$1"
+    local confirm_msg="$2"
+    local skip_msg="$3"
+    clear
+    echo "${prompt}"
+    while true; do
+        read -t 5 -p "Answer [y/n]: " reply
+        if [ -z "$reply" ]; then
+            reply="Y"
+        fi
+        case $reply in
+            Y|y)
+                echo "${confirm_msg}"
+                return 0
+                ;;
+            N|n)
+                echo "${skip_msg}"
+                return 1
+                ;;
+            *)
+                echo "Please enter 'y' or 'n'."
+                ;;
+        esac
+    done
+}
+
+yn_second() {
+    local prompt="$1"
+    local confirm_msg="$2"
+    local skip_msg="$3"
+    clear
+    echo "${prompt}"
+    while true; do
+        read -t 5 -rp "Answer [y/n]: " reply
+        reply=${reply:-N}
+        case "$reply" in
+            [Yy])
+                echo "${confirm_msg}"
+                return 0
+                ;;
+            [Nn])
+                echo "${skip_msg}"
+                return 1
+                ;;
+            *)
+                echo "Please answer y or n."
+                ;;
+        esac
+    done
+}
+
+edu_apps() {
+    echo "Select packages to install:"
+    echo "1) Preschool (TK)"
+    echo "2) Primary (SD)"
+    echo "3) Secondary (SMP-SMA)"
+    echo "4) Tertiary (Collage Level)"
+    echo "5) All"
+    echo -n "Enter choice (1-5): "
+    read choice
+
+    case $choice in
+        1) apps=("gcompris" "tuxpaint" "kalzium") ;;
+        2) apps=("tuxmath" "tuxtype" "marble") ;;
+        3) apps=("kalzium" "kstars" "geogebra") ;;
+        4) apps=("sagemath" "inkscape" "gimp") ;;
+        5) apps=("gcompris" "tuxpaint" "tuxmath" "tuxtype" "marble" "kalzium" "kstars" "geogebra" "sagemath" "inkscape" "gimp") ;;
+        *) echo "Invalid option"; return ;;
+    esac
+
+    if command -v pacman >/dev/null 2>&1; then
+        sudo pacman -S --needed "${apps[@]}"
+    elif command -v dnf >/dev/null 2>&1; then
+        sudo dnf install "${apps[@]}"
+    elif command -v xbps-install >/dev/null 2>&1; then
+        sudo xbps-install -S "${apps[@]}"
+    fi
+
+    if command -v flatpak >/dev/null 2>&1; then
+        flatpak install flathub "${apps[@]}" --noninteractive
+    fi
+}
+
+# == Security Configs ==
+firejail_install() {
+
+clear
+echo "================================================="
+echo "           Setup & Config Firejail?"
+echo "================================================="
+echo "Do you want to install & config Firejail? WARNING will make system more secure but a bit harder to use"
+echo "1) Yes, Setup Firejail"
+echo "2) No, Don't Setup Firejail"
+
+read -p $'\e[32mEnter choice [1-2]: \e[0m' choice
+
+case $choice in
+    '1')
+        sudo pacman -S --needed firejail
+        sudo mkdir -p /etc/firejail/firecfg.d
+        mkdir -p "$HOME/.config/firejail"
+        mkdir -p "$HOME/Allowed"
+        mkdir -p "$HOME/Allowed/AllowedCodes"
+        mkdir -p "$HOME/Allowed/AllowedDocs"
+        mkdir -p "$HOME/Allowed/AllowedPics"
+        mkdir -p "$HOME/.local/share/applications"
+
+        cp ~/cachysetup/firejail-configs/helium.profile ~/.config/firejail/helium.profile
+        cp ~/cachysetup/firejail-configs/brave.local ~/.config/firejail/brave.local
+        cp ~/cachysetup/firejail-configs/brave.local ~/.config/firejail/chromium.local
+        cp ~/cachysetup/firejail-configs/firefox.local ~/.config/firejail/firefox.local
+        cp ~/cachysetup/firejail-configs/librewolf.local ~/.config/firejail/librewolf.local
+
+        echo "Firejail Config Success"
+
+        sudo firecfg
+        sudo aa-enforce firejail-default || exit 1
+        sudo systemctl restart apparmor
+        sudo aa-status || exit 1
+        ;;
+
+    '2')
+        echo "Skipping Firejail Installation."
+        ;;
+    *)
+        echo "Invalid choice. Exiting."
+        exit 1
+        ;;
+esac
+}
+
+# == Shell Configs ==
+
+configure_bash() {
+
+    clear
+    echo "Configuring Bash"
+
+    echo "Installing bash-completion..."
+    sudo pacman -S --needed bash-completion
+
+    if ! command -v atuin &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh || exit 1
+    fi
+
+    clear
+    echo "Do you want to install ble.sh? (y/n):"
+    while true; do
+        read -t 5 -rp "Answer [y/n]: " reply
+        reply=${reply:-Y}
+        case $reply in
+            [Yy])
+                echo "How would you like to install ble.sh?"
+                echo "1) Git"
+                echo "2) Nix"
+                read -p $'\e[32mEnter choice [1-2]: \e[0m' ble_choice
+                case $ble_choice in
+                    '1')
+                        git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
+                        make -C /tmp/ble.sh install PREFIX="$HOME/.local"
+                        ;;
+                    '2')
+                        nix profile install nixpkgs#ble-sh
+                        ;;
+                    *)
+                        echo "Invalid choice. Skipping ble.sh."
+                        ;;
+                esac
+
+                grep -q "blesh/ble.sh" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'EOF'
+# ble.sh
+[ -f "$HOME/.local/share/blesh/ble.sh" ] && source "$HOME/.local/share/blesh/ble.sh"
+EOF
+
+                cat > ~/.blerc << 'EOF'
+bleopt complete_auto_delay=200
+bleopt highlight_syntax=
+bleopt complete_auto_history=
+HISTSIZE=5000
+HISTFILESIZE=10000
+shopt -s histappend
+bleopt edit_bell=vbell
+EOF
+                break
+                ;;
+            [Nn])
+                echo "Skipping ble.sh installation."
+                break
+                ;;
+            *)
+                echo "Please answer y or n."
+                ;;
+        esac
+    done
+
+grep -q "=== apps.sh managed block" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'BASHEOF'
+# === apps.sh managed block - do not edit manually ===
+eval "$(atuin init bash)"
+
+[ -f "$HOME/.local/share/blesh/ble.sh" ] && source "$HOME/.local/share/blesh/ble.sh"
+
+alias lsa="ls -a"
+alias update="~/.updater.sh"
+alias scan="clamscan -r"
+alias trm="trash-put"
+alias trestore="trash-restore"
+alias tbin="trash-empty"
+alias listt="trash-list"
+alias copy="wl-copy <"
+alias paste="wl-paste >"
+alias rkscan="sudo rkhunter --check --sk"
+alias kate="flatpak run org.kde.kate"
+
+# Extra functions
+gitpush_installscript() {
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
+}
+
+gitpush_installscript_force() {
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+}
+
+ollama_model() {
+  local model_name=$1
+  if [ -z "$model_name" ]; then
+    echo "Usage: copy_ollama_model <model-name>"
+    return 1
+  fi
+  ollama export "$model_name" "./${model_name//:/_}.bin"
+  echo "Model '$model_name' exported to $(pwd)/${model_name//:/_}.bin"
+}
+
+ollama_models_all() {
+  local export_dir="./ollama-backup"
+  mkdir -p "$export_dir"
+  ollama list --format json | jq -r '.[].name' | while read model; do
+    echo "Exporting $model..."
+    ollama export "$model" "$export_dir/${model//:/_}.bin"
+  done
+  echo "All models exported to $export_dir"
+}
+
+if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+if command -v thefuck &>/dev/null; then
+    eval "$(thefuck --alias)"
+fi
+
+export PATH="$PATH:$HOME/.opencode/bin"
+if command -v opencode &>/dev/null; then
+    source <(opencode completion bash 2>/dev/null) 2>/dev/null || true
+fi
+
+# === end of apps.sh block ===
+BASHEOF
+    echo "Bash configured at ~/.bashrc"
+    timeout 1s sleep 1
+}
+
+configure_zsh() {
+
+    clear
+    echo "Configuring Zsh"
+
+    sudo pacman -S --needed zsh
+
+    if [ ! -d "$HOME/.oh-my-zsh" ]; then
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    fi
+
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
+        git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
+    fi
+
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+    fi
+
+    if grep -q "^plugins=" "$HOME/.zshrc" 2>/dev/null; then
+        sed -i 's/^plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
+    fi
+
+    if ! command -v atuin &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh || exit 1
+    fi
+
+    grep -q "=== apps.sh managed block" "$HOME/.zshrc" 2>/dev/null || cat >> "$HOME/.zshrc" << 'ZSHEOF'
+# === apps.sh managed block - do not edit manually ===
+eval "$(atuin init zsh)"
+
+alias lsa="ls -a"
+alias update="~/.updater.sh"
+alias scan="clamscan -r"
+alias trm="trash-put"
+alias trestore="trash-restore"
+alias tbin="trash-empty"
+alias listt="trash-list"
+alias copy="wl-copy <"
+alias paste="wl-paste >"
+alias rkscan="sudo rkhunter --check --sk"
+alias kate="flatpak run org.kde.kate"
+
+# Extra functions
+gitpush_installscript() {
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
+}
+
+gitpush_installscript_force() {
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+}
+
+ollama_model() {
+  local model_name=$1
+  if [ -z "$model_name" ]; then
+    echo "Usage: copy_ollama_model <model-name>"
+    return 1
+  fi
+  ollama export "$model_name" "./${model_name//:/_}.bin"
+  echo "Model '$model_name' exported to $(pwd)/${model_name//:/_}.bin"
+}
+
+ollama_models_all() {
+  local export_dir="./ollama-backup"
+  mkdir -p "$export_dir"
+  ollama list --format json | jq -r '.[].name' | while read model; do
+    echo "Exporting $model..."
+    ollama export "$model" "$export_dir/${model//:/_}.bin"
+  done
+  echo "All models exported to $export_dir"
+}
+
+if [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+if command -v thefuck &>/dev/null; then
+    eval "$(thefuck --alias)"
+fi
+
+export PATH="$PATH:$HOME/.opencode/bin"
+if command -v opencode &>/dev/null; then
+    source <(opencode completion zsh 2>/dev/null) 2>/dev/null || true
+fi
+
+# === end of apps.sh block ===
+ZSHEOF
+    echo "Zsh configured at ~/.zshrc"
+    timeout 1s sleep 1
+}
+
+configure_fish() {
+
+    clear
+    echo "Configuring Fish"
+
+    sudo pacman -S --needed fish
+
+    if ! command -v atuin &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh || exit 1
+    fi
+
+    FISH_CONFIG_DIR="$HOME/.config/fish"
+    FISH_CONFIG_FILE="$FISH_CONFIG_DIR/config.fish"
+    mkdir -p "$FISH_CONFIG_DIR"
+
+        cat > "$FISH_CONFIG_FILE" << 'FISHEOF'
+if status is-interactive
+    set -gx ATUIN_NOBIND true
+    atuin init fish | source
+
+    bind \e\[A _atuin_bind_up
+    bind \cr _atuin_search
+
+    if bind -M insert >/dev/null 2>&1
+        bind -M insert \e\[A _atuin_bind_up
+        bind -M insert \cr _atuin_search
+    end
+
+    bind \e\[3\;5~ kill-word
+    bind \cH backward-kill-word
+end
+
+alias lsa "ls -a "
+alias update "~/.updater.sh "
+alias scan "clamscan -r "
+alias trm "trash-put "
+alias trestore "trash-restore "
+alias tbin "trash-empty "
+alias listt "trash-list "
+alias copy "wl-copy < "
+alias paste "wl-paste > "
+alias rkscan "sudo rkhunter --check --sk "
+alias kate "flatpak run org.kde.kate "
+
+# Extra functions
+function gitpush_installscript
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main
+end
+
+function gitpush_installscript_force
+    cd ~/Projects/Scripts/linuxmintsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/fedorasetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/voidsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/cachysetup && git add . && git commit -m "New changes" && git push -u origin main --force
+    cd ~/Projects/Scripts/nixsetup && git add . && git commit -m "New changes" && git push -u origin main --force
+end
+
+function ollama_model
+    set -l model_name $argv[1]
+    if test -z "$model_name"
+        echo "Usage: ollama_model <model-name>"
+        return 1
+    end
+    set -l parts (string split ":" "$model_name")
+    set -l model $parts[1]
+    set -l tag "latest"
+    if test (count $parts) -ge 2
+        set tag $parts[2]
+    end
+    set -l manifest_path "$HOME/.ollama/models/manifests/registry.ollama.ai/library/$model/$tag"
+    if not test -f "$manifest_path"
+        echo "Model '$model_name' not found in Ollama store"
+        return 1
+    end
+    set -l digest (jq -r '.layers[] | select(.mediaType == "application/vnd.ollama.image.model") | .digest' "$manifest_path")
+    if test -z "$digest"
+        echo "Could not find model data layer for '$model_name'"
+        return 1
+    end
+    set -l blob_name (string replace ":" "-" "$digest")
+    set -l blob_path "$HOME/.ollama/models/blobs/$blob_name"
+    if not test -f "$blob_path"
+        echo "Model blob not found at $blob_path"
+        return 1
+    end
+    set -l filename (string replace ":" "_" "$model_name").bin
+    cp "$blob_path" "./$filename"
+    echo "Model '$model_name' exported to "(pwd)"/"$filename
+end
+
+function ollama_models_all
+    set -l export_dir "./ollama-backup"
+    mkdir -p "$export_dir"
+    for manifest_path in $HOME/.ollama/models/manifests/registry.ollama.ai/library/*/*
+        set -l name (basename (dirname "$manifest_path"))
+        set -l tag (basename "$manifest_path")
+        set -l model "$name:$tag"
+        echo "Exporting $model..."
+        set -l digest (jq -r '.layers[] | select(.mediaType == "application/vnd.ollama.image.model") | .digest' "$manifest_path")
+        if test -n "$digest"
+            set -l blob_name (string replace ":" "-" "$digest")
+            set -l blob_path "$HOME/.ollama/models/blobs/$blob_name"
+            if test -f "$blob_path"
+                set -l filename (string replace ":" "_" "$model").bin
+                cp "$blob_path" "$export_dir/$filename"
+            end
+        end
+    end
+    echo "All models exported to $export_dir"
+end
+
+if test -f /home/linuxbrew/.linuxbrew/bin/brew
+    /home/linuxbrew/.linuxbrew/bin/brew shellenv | source
+end
+
+if command -v thefuck >/dev/null
+    thefuck --alias | source
+end
+FISHEOF
+    echo "Fish configured at $FISH_CONFIG_FILE"
+    timeout 1s sleep 1
+}
