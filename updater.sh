@@ -29,7 +29,7 @@ flatpak update -y || exit 1
 
 # Shell Tools
 
-    if [ -d "$HOME/.local/share/blesh" ] && [ ! -f "$HOME/.local/share/blesh/.git" ]; then
+    if [ -d "$HOME/.local/share/blesh" ] && [ ! -d "$HOME/.local/share/blesh/.git" ]; then
         if command -v nix &>/dev/null && nix profile list 2>/dev/null | grep -q ble-sh; then
             echo "Updating ble.sh via nix..."
             nix profile upgrade ble-sh 2>/dev/null || true

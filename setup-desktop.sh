@@ -80,9 +80,10 @@ timeout 2s sleep 2
 # Game Dev
 if yn_default "Do you want to install GameDev Apps?" "Installing..." "Skipping."; then
     sudo pacman -S --needed --noconfirm godot libresprite
-    curl -fL -o LDtk.zip "https://github.com/deepnight/ldtk/releases/download/v1.5.3/LDtk-1.5.3-linux.zip"
-    unzip LDtk.zip
-    rm LDtk.zip
+    mkdir -p ~/cachysetup/gamedev
+    curl -fL -o ~/cachysetup/gamedev/LDtk.zip "https://github.com/deepnight/ldtk/releases/download/v1.5.3/LDtk-1.5.3-linux.zip"
+    unzip -o ~/cachysetup/gamedev/LDtk.zip -d ~/cachysetup/gamedev
+    rm ~/cachysetup/gamedev/LDtk.zip
 fi
 
 # Games
