@@ -99,7 +99,7 @@ if yn "Configure Git?" Y; then
     read -rp "Enter your email: " git_email
     git config --global user.name "$git_name" || exit 1
     git config --global user.email "$git_email" || exit 1
-    echo "Git configured."
+    ok "Git configured."
     if [ ! -f "$HOME/.ssh/id_ed25519.pub" ]; then
         mkdir -p "$HOME/.ssh"
         ssh-keygen -t ed25519 -C "$git_email" -N "" -f "$HOME/.ssh/id_ed25519"
@@ -205,4 +205,4 @@ configure_shells() {
 configure_shells
 
 clear
-header "Security Setup Complete. "
+header "Base Setup Complete. "
