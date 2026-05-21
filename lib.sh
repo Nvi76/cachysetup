@@ -8,10 +8,11 @@ update_system() { sudo paru -Syu; }
 enable_svc()    { sudo systemctl enable --now "$@"; }
 
 # == UI helpers ==
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
-info()  { echo -e "${YELLOW}➜ $1${NC}"; }
-ok()    { echo -e "${GREEN}✓ $1${NC}"; }
-err()   { echo -e "${RED}✗ $1${NC}"; }
+RED='\033[0;31m'; GREEN='\e[1;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+info()  { echo -e "${YELLOW}=> $1${NC}"; }
+ok()    { echo -e "${GREEN}=> $1${NC}"; }
+err()   { echo -e "${RED}=> $1${NC}"; }
+header(){ echo; echo -e "${GREEN}══ $1 ══${NC}"; }
 
 pick() {
     local prompt="$1" min="$2" max="$3"
@@ -22,54 +23,20 @@ pick() {
     done
 }
 
-yn_default() {
-    local prompt="$1"
-    local confirm_msg="$2"
-    local skip_msg="$3"
-    clear
-    echo "${prompt}"
+yn() {
+    local prompt="${1:-Continue?}" default="${2:-Y}"
+    local timeout=5
+    local reply
     while true; do
-        read -t 5 -p "Answer [y/n]: " reply
-        if [ -z "$reply" ]; then
-            reply="Y"
+        if ! read -r -t "$timeout" -rp "$prompt [y/n] (default $default in ${timeout}s): " reply; then
+            echo
+            [[ "$default" == [Yy] ]] && return 0 || return 1
         fi
-        case $reply in
-            Y|y)
-                echo "${confirm_msg}"
-                return 0
-                ;;
-            N|n)
-                echo "${skip_msg}"
-                return 1
-                ;;
-            *)
-                echo "Please enter 'y' or 'n'."
-                ;;
-        esac
-    done
-}
 
-yn_second() {
-    local prompt="$1"
-    local confirm_msg="$2"
-    local skip_msg="$3"
-    clear
-    echo "${prompt}"
-    while true; do
-        read -t 5 -rp "Answer [y/n]: " reply
-        reply=${reply:-N}
-        case "$reply" in
-            [Yy])
-                echo "${confirm_msg}"
-                return 0
-                ;;
-            [Nn])
-                echo "${skip_msg}"
-                return 1
-                ;;
-            *)
-                echo "Please answer y or n."
-                ;;
+        case "${reply,,}" in
+            y|yes|Y) return 0 ;;
+            n|no|N)  return 1 ;;
+            *) err "Please enter y or n." ;;
         esac
     done
 }
@@ -81,10 +48,7 @@ edu_apps() {
     echo "3) Secondary (SMP-SMA)"
     echo "4) Tertiary (Collage Level)"
     echo "5) All"
-    echo -n "Enter choice (1-5): "
-    read choice
-
-    case $choice in
+    case $(pick "Choice [1-5]" 1 5) in
         1) apps=("gcompris" "tuxpaint" "kalzium") ;;
         2) apps=("tuxmath" "tuxtype" "marble") ;;
         3) apps=("kalzium" "kstars" "geogebra") ;;
@@ -110,16 +74,12 @@ edu_apps() {
 firejail_install() {
 
 clear
-echo "================================================="
-echo "           Setup & Config Firejail?"
-echo "================================================="
+header "Setup & Configure Firejail"
 echo "Do you want to install & config Firejail? WARNING will make system more secure but a bit harder to use"
 echo "1) Yes, Setup Firejail"
 echo "2) No, Don't Setup Firejail"
 
-read -p $'\e[32mEnter choice [1-2]: \e[0m' choice
-
-case $choice in
+case $(pick "choice [1-2]" 1 2) in
     '1')
         sudo pacman -S --needed firejail
         sudo mkdir -p /etc/firejail/firecfg.d
@@ -136,7 +96,7 @@ case $choice in
         cp ~/cachysetup/firejail-configs/firefox.local ~/.config/firejail/firefox.local
         cp ~/cachysetup/firejail-configs/librewolf.local ~/.config/firejail/librewolf.local
 
-        echo "Firejail Config Success"
+        ok "Firejail Config Success"
 
         sudo firecfg
         sudo aa-enforce firejail-default || exit 1
@@ -145,11 +105,10 @@ case $choice in
         ;;
 
     '2')
-        echo "Skipping Firejail Installation."
+        info "Skipping Firejail Installation."
         ;;
     *)
-        echo "Invalid choice. Exiting."
-        exit 1
+        err "Invalid choice."
         ;;
 esac
 }
@@ -159,9 +118,9 @@ esac
 configure_bash() {
 
     clear
-    echo "Configuring Bash"
+    header "Bash"
 
-    echo "Installing bash-completion..."
+    info "Installing bash-completion..."
     sudo pacman -S --needed bash-completion
 
     if ! command -v atuin &>/dev/null; then
@@ -169,35 +128,28 @@ configure_bash() {
     fi
 
     clear
-    echo "Do you want to install ble.sh? (y/n):"
-    while true; do
-        read -t 5 -rp "Answer [y/n]: " reply
-        reply=${reply:-Y}
-        case $reply in
-            [Yy])
-                echo "How would you like to install ble.sh?"
-                echo "1) Git"
-                echo "2) Nix"
-                read -p $'\e[32mEnter choice [1-2]: \e[0m' ble_choice
-                case $ble_choice in
-                    '1')
-                        git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
-                        make -C /tmp/ble.sh install PREFIX="$HOME/.local"
-                        ;;
-                    '2')
-                        nix profile install nixpkgs#ble-sh
-                        ;;
-                    *)
-                        echo "Invalid choice. Skipping ble.sh."
-                        ;;
-                esac
+    if yn "Do you want to install ble.sh?" Y; then
+        echo "How would you like to install ble.sh?"
+        echo "1) Git"
+        echo "2) Nix"
+        case $(pick "[1-2]" 1 2) in
+            '1')
+            git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git /tmp/ble.sh
+            make -C /tmp/ble.sh install PREFIX="$HOME/.local"
+            ;;
+            '2')
+            nix profile install nixpkgs#ble-sh
+            ;;
+            *)
+            err "Invalid choice. Skipping ble.sh."
+        esac
 
-                grep -q "blesh/ble.sh" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'EOF'
+        grep -q "blesh/ble.sh" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'EOF'
 # ble.sh
 [ -f "$HOME/.local/share/blesh/ble.sh" ] && source "$HOME/.local/share/blesh/ble.sh"
 EOF
 
-                cat > ~/.blerc << 'EOF'
+        cat > ~/.blerc << 'EOF'
 bleopt complete_auto_delay=200
 bleopt highlight_syntax=
 bleopt complete_auto_history=
@@ -206,19 +158,12 @@ HISTFILESIZE=10000
 shopt -s histappend
 bleopt edit_bell=vbell
 EOF
-                break
-                ;;
-            [Nn])
-                echo "Skipping ble.sh installation."
-                break
-                ;;
-            *)
-                echo "Please answer y or n."
-                ;;
-        esac
-    done
+        fi
 
-grep -q "=== apps.sh managed block" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'BASHEOF'
+    # Clear pre-existing managed sections using a quick pass of sed
+    sed -i '/^# === apps.sh managed block ===$/,/^# === end of apps.sh block ===$/d' "$HOME/.bashrc" 2>/dev/null || true
+
+    grep -q "=== apps.sh managed block" "$HOME/.bashrc" 2>/dev/null || cat >> "$HOME/.bashrc" << 'BASHEOF'
 # === apps.sh managed block - do not edit manually ===
 eval "$(atuin init bash)"
 
@@ -288,14 +233,14 @@ fi
 
 # === end of apps.sh block ===
 BASHEOF
-    echo "Bash configured at ~/.bashrc"
+    ok "Bash configured at ~/.bashrc"
     sleep 1
 }
 
 configure_zsh() {
 
     clear
-    echo "Configuring Zsh"
+    header "Zsh"
 
     sudo pacman -S --needed zsh
 
@@ -318,6 +263,9 @@ configure_zsh() {
     if ! command -v atuin &>/dev/null; then
         curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh || exit 1
     fi
+
+    # Clear pre-existing managed sections using a quick pass of sed
+    sed -i '/^# === apps.sh managed block ===$/,/^# === end of apps.sh block ===$/d' "$HOME/.zshrc" 2>/dev/null || true
 
     grep -q "=== apps.sh managed block" "$HOME/.zshrc" 2>/dev/null || cat >> "$HOME/.zshrc" << 'ZSHEOF'
 # === apps.sh managed block - do not edit manually ===
@@ -387,14 +335,14 @@ fi
 
 # === end of apps.sh block ===
 ZSHEOF
-    echo "Zsh configured at ~/.zshrc"
+    ok "Zsh configured at ~/.zshrc"
     sleep 1
 }
 
 configure_fish() {
 
     clear
-    echo "Configuring Fish"
+    header "Fish"
 
     sudo pacman -S --needed fish
 
@@ -406,7 +354,11 @@ configure_fish() {
     FISH_CONFIG_FILE="$FISH_CONFIG_DIR/config.fish"
     mkdir -p "$FISH_CONFIG_DIR"
 
-        cat > "$FISH_CONFIG_FILE" << 'FISHEOF'
+    # Clear pre-existing managed sections using a quick pass of sed
+    sed -i '/^# === apps.sh managed block ===$/,/^# === end of apps.sh block ===$/d' "$HOME/.config/fish/config.fish" 2>/dev/null || true
+
+    cat > "$FISH_CONFIG_FILE" << 'FISHEOF'
+# === apps.sh managed block ===
 if status is-interactive
     set -gx ATUIN_NOBIND true
     atuin init fish | source
@@ -513,7 +465,9 @@ end
 if command -v thefuck >/dev/null
     thefuck --alias | source
 end
+
+# === end of apps.sh block ===
 FISHEOF
-    echo "Fish configured at $FISH_CONFIG_FILE"
+    ok "Fish configured at $FISH_CONFIG_FILE"
     sleep 1
 }
