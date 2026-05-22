@@ -25,6 +25,12 @@ if yn "Do you want to install base apps?" Y; then
     sudo pacman -S --needed --noconfirm vulkan-tools base-devel python-tkinter tmux unzip xclip fish neovim fzf ranger btop thefuck trash-cli fastfetch
 fi
 
+# Office
+if yn "Install Office Apps? (Libreoffice & Onlyoffice?)" Y; then
+    if yn "Install Libreoffice?" Y; then sudo pacman -S --needed --noconfirm libreoffice; fi
+    if yn "Install OnlyOffice?" Y; then sudo pacman -S --needed --noconfirm onlyoffice-bin; fi
+fi
+
 # Flatpak apps
 if yn "Do you want to install flatpak apps?" Y; then
     sudo pacman -S --needed --noconfirm flatpak
@@ -163,8 +169,8 @@ has_ollama=$(command -v ollama)
 has_opencode=$(command -v opencode)
 if [ -n "$has_ollama" ] || [ -n "$has_opencode" ]; then
     clear
-    echo "Configuring AI tools..."
-    ~/cachysetup/ai_confs.sh
+    info "Configuring AI tools..."
+    "$SCRIPT_DIR"/ai_confs.sh
 fi
 
 # Power Management
@@ -191,4 +197,4 @@ esac
 sudo pacman -Syu --noconfirm
 
 clear
-header "Setup Complete. Please Reboot Your PC"
+header "Base Setup Complete. Please Reboot Your PC"

@@ -5,8 +5,8 @@ sudo -v
 
 chmod +x updater.sh removeconf.sh setup-desktop.sh ai_confs.sh
 
-sudo cp /etc/hosts "$HOME/cachysetup/hosts.backup"
-cp ~/cachysetup/updater.sh ~/.updater.sh || exit 1
+sudo cp /etc/hosts "$SCRIPT_DIR"/hosts.backup
+cp "$SCRIPT_DIR"/updater.sh ~/.updater.sh || exit 1
 
 # ===============
 #    Security

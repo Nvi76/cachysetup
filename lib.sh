@@ -90,11 +90,11 @@ case $(pick "choice [1-2]" 1 2) in
         mkdir -p "$HOME/Allowed/AllowedPics"
         mkdir -p "$HOME/.local/share/applications"
 
-        cp ~/cachysetup/firejail-configs/helium.profile ~/.config/firejail/helium.profile
-        cp ~/cachysetup/firejail-configs/brave.local ~/.config/firejail/brave.local
-        cp ~/cachysetup/firejail-configs/brave.local ~/.config/firejail/chromium.local
-        cp ~/cachysetup/firejail-configs/firefox.local ~/.config/firejail/firefox.local
-        cp ~/cachysetup/firejail-configs/librewolf.local ~/.config/firejail/librewolf.local
+        cp "$SCRIPT_DIR"/firejail-configs/helium.profile ~/.config/firejail/helium.profile
+        cp "$SCRIPT_DIR"/firejail-configs/brave.local ~/.config/firejail/brave.local
+        cp "$SCRIPT_DIR"/firejail-configs/brave.local ~/.config/firejail/chromium.local
+        cp "$SCRIPT_DIR"/firejail-configs/firefox.local ~/.config/firejail/firefox.local
+        cp "$SCRIPT_DIR"/firejail-configs/librewolf.local ~/.config/firejail/librewolf.local
 
         ok "Firejail Config Success"
 
@@ -158,7 +158,7 @@ HISTFILESIZE=10000
 shopt -s histappend
 bleopt edit_bell=vbell
 EOF
-        fi
+    fi
 
     # Clear pre-existing managed sections using a quick pass of sed
     sed -i '/^# === apps.sh managed block ===$/,/^# === end of apps.sh block ===$/d' "$HOME/.bashrc" 2>/dev/null || true

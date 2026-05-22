@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
+
+# == UI helpers ==
+RED='\033[0;31m'; GREEN='\e[1;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+info()  { echo -e "${YELLOW}=> $1${NC}"; }
+ok()    { echo -e "${GREEN}=> $1${NC}"; }
+err()   { echo -e "${RED}=> $1${NC}"; }
+header(){ echo; echo -e "${GREEN}══ $1 ══${NC}"; }
 
 sudo systemctl stop clamav-freshclam || exit 1
 sudo freshclam || exit 1
