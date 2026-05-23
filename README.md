@@ -25,8 +25,8 @@ ssh-keygen -t ed25519 -C "your_email@example.com"
 
 ```bash
 cd ~/Projects/Scripts/cachysetup
-git remote add origin git@github.com:YOUR_USERNAME/cachysetup.git # this is if there's no origin yet
 git init
+git remote add origin git@github.com:YOUR_USERNAME/cachysetup.git # this is if there's no origin yet
 git remote set-url origin git@github.com:YOUR_USERNAME/cachysetup.git
 git add .
 git commit -m "Initial setup"
@@ -40,6 +40,17 @@ cd ~/Projects/Scripts/cachysetup
 git add .
 git commit -m "description of changes"
 git push
+```
+
+5) Exclude Files or Folders
+
+**Files**
+```
+git add . -- ':!file.file' # or for multiple files git add . -- ':!file.file' ':!file.file'
+```
+**Folders**
+```
+git add . -- ':!folder/' # or multiple folders git add . -- ':!folder1/' ':!folder2/' ':!folder3/'   
 ```
 
 # 2. Shell Configs
